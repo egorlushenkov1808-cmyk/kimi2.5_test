@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>KBUA Poker Club</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --accent-gold: #d4af37;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --border: #2a2a3a;
+        }
+
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at top, #1a1a2e 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, #0f3460 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .app-container {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(18, 18, 26, 0.95);
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-gold), #f4d03f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .admin-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .nav-tabs {
+            display: flex;
+            padding: 15px;
+            gap: 8px;
+            overflow-x: auto;
+            background: rgba(18, 18, 26, 0.8);
+            flex-shrink: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab {
+            padding: 10px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tab.active {
+            background: var(--accent-gold);
+            color: #000;
+            border-color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 30px;
+        }
+
+        .tournament-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tournament-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-gold), transparent);
+        }
+
+        .tournament-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .tournament-title {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.3;
+            flex: 1;
+        }
+
+        .tournament-date {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tournament-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .info-value.gold {
+            color: var(--accent-gold);
+        }
+
+        .players-list {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+        }
+
+        .player-avatars {
+            display: flex;
+            margin-right: 8px;
+        }
+
+        .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid var(--bg-card);
+            margin-left: -6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .avatar:first-child {
+            margin-left: 0;
+        }
+
+        .players-text {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-gold), #f4d03f);
+            color: #000;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .btn-success {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 100%;
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px;
+            animation: slideUp 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-gold);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--accent-green);
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .admin-form {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .admin-title {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--accent-gold);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    
+    <div class="app-container">
+        <div class="header">
+            <button class="admin-btn" onclick="toggleAdmin()">⚙️ Админ</button>
+            <div class="logo">♠ KBUA POKER ♦</div>
+            <div class="subtitle">Спортивный покерный клуб</div>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="tab active" onclick="switchTab('upcoming')">Предстоящие</div>
+            <div class="tab" onclick="switchTab('registered')">Мои турниры</div>
+            <div class="tab" onclick="switchTab('admin')" id="adminTab" style="display:none">Управление</div>
+        </div>
+
+        <div class="content" id="content"></div>
+    </div>
+
+    <!-- Модалка записи -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Запись на турнир</h2>
+            <div class="form-group">
+                <label class="form-label">Ваш ник в покер-руме</label>
+                <input type="text" class="form-input" id="playerNickname" placeholder="Например: PokerMaster99">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Телефон для связи</label>
+                <input type="tel" class="form-input" id="playerPhone" placeholder="+7 (999) 000-00-00">
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" class="checkbox" id="rulesAgree">
+                <label for="rulesAgree" style="color: var(--text-secondary); font-size: 13px;">
+                    Согласен с правилами клуба
+                </label>
+            </div>
+            <button class="btn btn-primary" onclick="submitRegistration()">
+                Подтвердить запись
+            </button>
+            <button class="btn btn-danger" onclick="closeModal()" style="margin-top: 10px; background: transparent; border: none;">
+                Отмена
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '';
+        
+        let tg = window.Telegram.WebApp;
+        let user = { id: 99999, username: 'test_user' };
+        let currentTab = 'upcoming';
+        let selectedTournament = null;
+        let tournamentsData = [];
+        let isTelegram = false;
+        let isAdmin = false;
+
+        function initApp() {
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    tg = window.Telegram.WebApp;
+                    tg.expand();
+                    tg.ready();
+                    
+                    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                        user = tg.initDataUnsafe.user;
+                        isTelegram = true;
+                        
+                        // Проверка на админа (по ID или username)
+                        const admins = [971440476, 'able_to_love']; // Замени на свои!
+                        if (admins.includes(user.id) || admins.includes(user.username)) {
+                            isAdmin = true;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Ошибка инициализации Telegram:', e);
+            }
+            
+            setTimeout(() => {
+                loadTournaments();
+            }, 300);
+        }
+
+        async function loadTournaments() {
+            try {
+                const response = await fetch('/api/tournaments');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                tournamentsData = await response.json();
+                
+                try {
+                    const checkResponse = await fetch(`/api/check/${user.id}`);
+                    if (checkResponse.ok) {
+                        const userRegs = await checkResponse.json();
+                        
+                        tournamentsData.forEach(t => {
+                            t.registered = userRegs.some(r => r.tournamentId === t.id);
+                            t.players = t.players || [];
+                        });
+                    }
+                } catch (e) {
+                    tournamentsData.forEach(t => {
+                        t.registered = false;
+                        t.players = t.players || [];
+                    });
+                }
+                
+                renderTournaments();
+                
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h3>Ошибка загрузки</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="loadTournaments()" style="margin-top: 20px;">
+                            Попробовать снова
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTournaments() {
+            const content = document.getElementById('content');
+            
+            if (currentTab === 'upcoming') {
+                const upcoming = tournamentsData.filter(t => t.status !== 'finished');
+                
+                if (upcoming.length === 0) {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🎰</div>
+                            <h3>Нет предстоящих турниров</h3>
+                            <p>Нажмите "Админ" чтобы добавить</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                content.innerHTML = upcoming.map(t => `
+                    <div class="tournament-card">
+                        <div class="tournament-header">
+                            <div>
+                                <div class="tournament-title">${t.title}</div>
+                                ${t.status === 'live' ? '<div class="live-indicator"><span class="live-dot"></span> LIVE</div>' : ''}
+                            </div>
+                            <div class="tournament-date">${t.date}</div>
+                        </div>
+                        
+                        <div class="tournament-info">
+                            <div class="info-item">
+                                <div class="info-label">Бай-ин</div>
+                                <div class="info-value">${t.buyin}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Призовой</div>
+                                <div class="info-value gold">${t.prize}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Игроки</div>
+                                <div class="info-value">${t.players.length}/${t.maxPlayers}</div>
+                            </div>
+                        </div>
+
+                        <div class="players-list">
+                            <div class="player-avatars">
+                                ${t.players.slice(0, 3).map((p, i) => 
+                                    `<div class="avatar" style="background: hsl(${i * 60}, 70%, 50%)">${p.nickname ? p.nickname[0] : '?'}</div>`
+                                ).join('')}
+                            </div>
+                            <div class="players-text">
+                                ${t.players.length > 3 ? `+${t.players.length - 3} игроков` : `${t.players.length} записалось`}
+                            </div>
+                        </div>
+
+                        ${t.registered 
+                            ? `<button class="btn btn-success" onclick="cancelRegistration(${t.id})">✓ Вы записаны (отменить)</button>`
+                            : `<button class="btn btn-primary" onclick="openRegisterModal(${t.id})">Записаться</button>`
+                        }
+                    </div>
+                `).join('');
+            } else if (currentTab === 'admin' && isAdmin) {
+                renderAdminPanel();
+            }
+        }
+
+        function renderAdminPanel() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="admin-form">
+                    <div class="admin-title">➕ Добавить турнир</div>
+                    <div class="form-group">
+                        <label class="form-label">Название турнира</label>
+                        <input type="text" class="form-input" id="newTitle" placeholder="Например: Sunday High Roller">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Дата</label>
+                            <input type="text" class="form-input" id="newDate" placeholder="12 фев, 19:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Бай-ин</label>
+                            <input type="text" class="form-input" id="newBuyin" placeholder="5,000 ₽">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Призовой фонд</label>
+                            <input type="text" class="form-input" id="newPrize" placeholder="150,000 ₽">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Макс. игроков</label>
+                            <input type="number" class="form-input" id="newMaxPlayers" placeholder="20" value="20">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addTournament()">
+                        Создать турнир
+                    </button>
+                </div>
+
+                <h3 style="margin: 20px 0 15px; font-size: 16px;">Текущие турниры:</h3>
+                ${tournamentsData.map(t => `
+                    <div class="tournament-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700;">${t.title}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    ${t.date} • ${t.players.length}/${t.maxPlayers} игроков
+                                </div>
+                            </div>
+                            <button class="btn btn-danger btn-small" onclick="deleteTournament(${t.id})">
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        async function addTournament() {
+            const title = document.getElementById('newTitle').value.trim();
+            const date = document.getElementById('newDate').value.trim();
+            const buyin = document.getElementById('newBuyin').value.trim();
+            const prize = document.getElementById('newPrize').value.trim();
+            const maxPlayers = parseInt(document.getElementById('newMaxPlayers').value);
+
+            if (!title || !date || !buyin || !prize || !maxPlayers) {
+                showAlert('Заполните все поля');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/tournaments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        date,
+                        buyin,
+                        prize,
+                        maxPlayers,
+                        status: 'open'
+                    })
+                });
+
+                if (response.ok) {
+                    showAlert('✅ Турнир создан!');
+                    loadTournaments();
+                } else {
+                    showAlert('❌ Ошибка создания');
+                }
+            } catch (error) {
+                showAlert('Ошибка соединения');
+            }
+        }
+
+        async function deleteTournament(id) {
+            if (!confirm('Удалить турнир?')) return;
+            
+            try {
+                const response = await fetch(`/api/tournaments/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadTournaments();
+                }
+            } catch (error) {
+                showAlert('Ошибка удаления');
+            }
+        }
+
+        function toggleAdmin() {
+    // Проверяем, есть ли право на админку
+    const admins = [971440476]; // ТВОЙ ID ЗДЕСЬ ТОЖЕ!
+    
+    if (!admins.includes(user.id) && !admins.includes(user.username)) {
+        showAlert('❌ Доступ запрещён');
+        return;
+    }
+    
+    // Переключаем видимость вкладки админа
+    const adminTab = document.getElementById('adminTab');
+    if (adminTab.style.display === 'none' || !adminTab.style.display) {
+        adminTab.style.display = 'block';
+        switchTab('admin');
+    } else {
+        adminTab.style.display = 'none';
+        switchTab('upcoming');
+    }
+}
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTournaments();
+        }
+
+        function openRegisterModal(tournamentId) {
+            selectedTournament = tournamentId;
+            document.getElementById('registerModal').classList.add('active');
+            if (user && user.username) {
+                document.getElementById('playerNickname').value = user.username;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('registerModal').classList.remove('active');
+            selectedTournament = null;
+        }
+
+        async function submitRegistration() {
+            const nickname = document.getElementById('playerNickname').value.trim();
+            const phone = document.getElementById('playerPhone').value.trim();
+            const agreed = document.getElementById('rulesAgree').checked;
+
+            if (!nickname || !phone || !agreed) {
+                showAlert('Заполните все поля и примите правила');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tournamentId: selectedTournament,
+                        userId: user.id,
+                        username: user.username || 'unknown',
+                        nickname: nickname,
+                        phone: phone
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('✅ ' + result.message);
+                    closeModal();
+                    loadTournaments();
+                } else {
+                    showAlert('❌ ' + (result.error || 'Ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка регистрации:', error);
+                showAlert('Ошибка соединения');
+            }
+        }
+
+        async function cancelRegistration(tournamentId) {
+            const confirmed = confirm('Отменить запись на турнир?');
+            if (!confirmed) return;
+            
+            try {
+                const response = await fetch('/api/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tournamentId: tournamentId,
+                        userId: user.id
+                    })
+                });
+                
+                if (response.ok) {
+                    loadTournaments();
+                }
+            } catch (error) {
+                showAlert('Ошибка отмены');
+            }
+        }
+
+        function showAlert(message) {
+            if (isTelegram && tg.showAlert) {
+                tg.showAlert(message);
+            } else {
+                alert(message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
