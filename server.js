@@ -2,10 +2,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
-const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'] }));
 app.use(bodyParser.json());
@@ -13,7 +12,6 @@ app.use(express.static('public'));
 
 const DB_FILE = './data.json';
 
-// Инициализация БД
 function initDB() {
     if (!fs.existsSync(DB_FILE)) {
         fs.writeFileSync(DB_FILE, JSON.stringify({
@@ -33,7 +31,6 @@ function writeDB(data) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-// GET все турниры
 app.get('/api/tournaments', (req, res) => {
     try {
         const db = readDB();
@@ -43,7 +40,6 @@ app.get('/api/tournaments', (req, res) => {
     }
 });
 
-// POST создать турнир
 app.post('/api/tournaments', (req, res) => {
     try {
         const { title, date, buyin, prize, maxPlayers, status } = req.body;
@@ -74,7 +70,6 @@ app.post('/api/tournaments', (req, res) => {
     }
 });
 
-// DELETE удалить турнир
 app.delete('/api/tournaments/:id', (req, res) => {
     try {
         const db = readDB();
@@ -90,7 +85,6 @@ app.delete('/api/tournaments/:id', (req, res) => {
     }
 });
 
-// GET проверка регистраций пользователя
 app.get('/api/check/:userId', (req, res) => {
     try {
         const db = readDB();
@@ -101,7 +95,6 @@ app.get('/api/check/:userId', (req, res) => {
     }
 });
 
-// POST регистрация на турнир
 app.post('/api/register', (req, res) => {
     try {
         const { tournamentId, userId, username, nickname, phone } = req.body;
@@ -150,7 +143,6 @@ app.post('/api/register', (req, res) => {
     }
 });
 
-// POST отмена регистрации
 app.post('/api/cancel', (req, res) => {
     try {
         const { tournamentId, userId } = req.body;
@@ -172,6 +164,6 @@ app.post('/api/cancel', (req, res) => {
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Сервер: http://localhost:${PORT}`);
+app.listen(PORT, () => {
+    console.log(`🚀 Сервер запущен на порту ${PORT}`);
 });
