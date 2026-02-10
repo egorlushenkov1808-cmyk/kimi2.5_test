@@ -2,21 +2,26 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'] }));
+// Middleware
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'] }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
 const DB_FILE = './data.json';
+const ADMIN_IDS = [123456789]; // ЗАМЕНИ НА СВОЙ ID
 
+// Инициализация БД
 function initDB() {
     if (!fs.existsSync(DB_FILE)) {
         fs.writeFileSync(DB_FILE, JSON.stringify({
             tournaments: [],
-            registrations: []
+            registrations: [],
+            users: []
         }, null, 2));
     }
 }
@@ -31,26 +36,99 @@ function writeDB(data) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
+// Получить или создать пользователя
+function getOrCreateUser(userId, username) {
+    const db = readDB();
+    let user = db.users.find(u => u.id === userId);
+    
+    if (!user) {
+        user = {
+            id: userId,
+            username: username || 'unknown',
+            nickname: username || 'Player',
+            phone: '',
+            stats: {
+                totalGames: 0,
+                wins: 0,
+                cashes: 0,
+                profit: 0,
+                rating: 1000
+            },
+            history: [],
+            achievements: [],
+            isAdmin: ADMIN_IDS.includes(userId)
+        };
+        db.users.push(user);
+        writeDB(db);
+    }
+    
+    return user;
+}
+
+// ========== API ROUTES ==========
+
+// Проверка админа
+app.get('/api/check-admin/:userId', (req, res) => {
+    const isAdmin = ADMIN_IDS.includes(parseInt(req.params.userId));
+    res.json({ isAdmin });
+});
+
+// Получить профиль пользователя
+app.get('/api/user/:userId', (req, res) => {
+    try {
+        const db = readDB();
+        const user = db.users.find(u => u.id == req.params.userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Обновить профиль
+app.put('/api/user/:userId', (req, res) => {
+    try {
+        const { nickname, phone } = req.body;
+        const db = readDB();
+        const user = db.users.find(u => u.id == req.params.userId);
+        
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        
+        if (nickname) user.nickname = nickname;
+        if (phone) user.phone = phone;
+        
+        writeDB(db);
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Получить турниры
 app.get('/api/tournaments', (req, res) => {
     try {
         const db = readDB();
         res.json(db.tournaments);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка сервера' });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
+// Создать турнир (только админ)
 app.post('/api/tournaments', (req, res) => {
     try {
-        const { title, date, buyin, prize, maxPlayers, status } = req.body;
+        const { title, date, buyin, prize, maxPlayers, userId } = req.body;
+        
+        if (!ADMIN_IDS.includes(parseInt(userId))) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
         
         if (!title || !date || !buyin || !prize || !maxPlayers) {
-            return res.status(400).json({ error: 'Заполните все поля' });
+            return res.status(400).json({ error: 'Fill all fields' });
         }
         
         const db = readDB();
-        
-        const newTournament = {
+        const tournament = {
             id: Date.now(),
             title,
             date,
@@ -58,112 +136,99 @@ app.post('/api/tournaments', (req, res) => {
             prize,
             maxPlayers: parseInt(maxPlayers),
             players: [],
-            status: status || 'open'
+            status: 'open',
+            results: []
         };
         
-        db.tournaments.push(newTournament);
+        db.tournaments.push(tournament);
         writeDB(db);
         
-        res.json({ success: true, tournament: newTournament });
+        res.json({ success: true, tournament });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка создания' });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
+// Обновить турнир
+app.put('/api/tournaments/:id', (req, res) => {
+    try {
+        const { userId, ...updates } = req.body;
+        
+        if (!ADMIN_IDS.includes(parseInt(userId))) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        const db = readDB();
+        const tournament = db.tournaments.find(t => t.id === parseInt(req.params.id));
+        
+        if (!tournament) return res.status(404).json({ error: 'Not found' });
+        
+        Object.assign(tournament, updates);
+        writeDB(db);
+        
+        res.json({ success: true, tournament });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Удалить турнир
 app.delete('/api/tournaments/:id', (req, res) => {
     try {
-        const db = readDB();
-        const id = parseInt(req.params.id);
+        const userId = parseInt(req.headers['user-id']);
         
-        db.tournaments = db.tournaments.filter(t => t.id !== id);
-        db.registrations = db.registrations.filter(r => r.tournamentId !== id);
+        if (!ADMIN_IDS.includes(userId)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        const db = readDB();
+        db.tournaments = db.tournaments.filter(t => t.id !== parseInt(req.params.id));
+        db.registrations = db.registrations.filter(r => r.tournamentId !== parseInt(req.params.id));
         
         writeDB(db);
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка удаления' });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-app.get('/api/check/:userId', (req, res) => {
-    try {
-        const db = readDB();
-        const userRegs = db.registrations.filter(r => r.userId == req.params.userId);
-        res.json(userRegs);
-    } catch (error) {
-        res.json([]);
-    }
-});
-
+// Регистрация на турнир
 app.post('/api/register', (req, res) => {
     try {
         const { tournamentId, userId, username, nickname, phone } = req.body;
         
-        if (!tournamentId || !userId || !nickname || !phone) {
-            return res.status(400).json({ error: 'Не все поля заполнены' });
-        }
-        
         const db = readDB();
-        
         const tournament = db.tournaments.find(t => t.id === tournamentId);
-        if (!tournament) {
-            return res.status(404).json({ error: 'Турнир не найден' });
-        }
         
+        if (!tournament) return res.status(404).json({ error: 'Tournament not found' });
         if (tournament.players.length >= tournament.maxPlayers) {
-            return res.status(400).json({ error: 'Нет мест' });
+            return res.status(400).json({ error: 'No seats available' });
         }
         
         const existing = db.registrations.find(r => 
             r.tournamentId === tournamentId && r.userId === userId
         );
+        if (existing) return res.status(400).json({ error: 'Already registered' });
         
-        if (existing) {
-            return res.status(400).json({ error: 'Уже записаны' });
-        }
+        // Создать или обновить пользователя
+        const user = getOrCreateUser(userId, username);
+        if (nickname) user.nickname = nickname;
+        if (phone) user.phone = phone;
         
         const registration = {
             id: Date.now(),
             tournamentId,
             userId,
-            username: username || 'unknown',
-            nickname,
-            phone,
+            nickname: user.nickname,
+            phone: user.phone,
             registeredAt: new Date().toISOString()
         };
         
         db.registrations.push(registration);
-        tournament.players.push({ userId, nickname });
+        tournament.players.push({ userId, nickname: user.nickname, phone: user.phone });
         
         writeDB(db);
         
-        res.json({ success: true, message: 'Запись подтверждена!' });
+        res.json({ success: true, message: 'Registration confirmed!' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка сервера' });
-    }
-});
-
-app.post('/api/cancel', (req, res) => {
-    try {
-        const { tournamentId, userId } = req.body;
-        const db = readDB();
-        
-        const tournament = db.tournaments.find(t => t.id === tournamentId);
-        if (tournament) {
-            tournament.players = tournament.players.filter(p => p.userId !== userId);
-        }
-        
-        db.registrations = db.registrations.filter(r => 
-            !(r.tournamentId === tournamentId && r.userId === userId)
-        );
-        
-        writeDB(db);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: 'Ошибка' });
-    }
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Сервер запущен на порту ${PORT}`);
-});
+        res.status(500).json({ error: 'Server error'

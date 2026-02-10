@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Admin Panel | KBUA Poker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold-primary: #D4AF37;
+            --gold-light: #F4D03F;
+            --gold-dark: #B8860B;
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-elevated: #1a1a25;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --accent-blue: #3498db;
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --border: #2a2a3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0f0f1a 100%);
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(18, 18, 26, 0.95);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--gold-primary);
+        }
+
+        /* Navigation */
+        .admin-nav {
+            display: flex;
+            padding: 12px 16px;
+            gap: 8px;
+            overflow-x: auto;
+            background: rgba(18, 18, 26, 0.9);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .admin-nav-btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .admin-nav-btn.active {
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            border-color: var(--gold-primary);
+            color: #000;
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Forms */
+        .form-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
+            color: #000;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-danger {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .btn-success {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 13px;
+            width: auto;
+        }
+
+        /* Tournament List */
+        .tournament-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .tournament-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .tournament-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .tournament-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .tournament-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-open {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-finished {
+            background: rgba(142, 142, 142, 0.15);
+            color: var(--text-secondary);
+        }
+
+        .tournament-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+               .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gold-primary);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .tournament-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Players List */
+        .players-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .players-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-elevated);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .player-name {
+            font-weight: 600;
+        }
+
+        .player-phone {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Results Form */
+        .results-form {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .result-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 100px 100px;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .result-place {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gold-primary);
+            text-align: center;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--gold-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--bg-card);
+            border: 1px solid var(--gold-primary);
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .notification.success {
+            border-color: var(--accent-green);
+        }
+
+        .notification.error {
+            border-color: var(--accent-red);
+        }
+
+        /* Responsive */
+        @media (max-width: 380px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .result-row {
+                grid-template-columns: 40px 1fr 80px;
+            }
+            .result-row input:last-child {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">♠</div>
+                <div class="logo-text">ADMIN</div>
+            </div>
+            <button class="back-btn" onclick="window.location.href='/'">← Назад</button>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="admin-nav">
+            <button class="admin-nav-btn active" onclick="switchTab('create')">Создать</button>
+            <button class="admin-nav-btn" onclick="switchTab('manage')">Управление</button>
+            <button class="admin-nav-btn" onclick="switchTab('results')">Результаты</button>
+        </nav>
+
+        <!-- Content -->
+        <main class="content" id="content">
+            <!-- Content loaded dynamically -->
+        </main>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        const API_URL = '';
+        let tg = window.Telegram.WebApp;
+        let user = { id: 99999, username: 'admin' };
+        let currentTab = 'create';
+        let tournamentsData = [];
+        let selectedTournament = null;
+
+        // Initialize
+        async function init() {
+            try {
+                if (window.Telegram?.WebApp) {
+                    tg = window.Telegram.WebApp;
+                    tg.expand();
+                    tg.ready();
+                    
+                    if (tg.initDataUnsafe?.user) {
+                        user = tg.initDataUnsafe.user;
+                    }
+                }
+                
+                // Verify admin
+                const check = await fetch(`/api/check-admin/${user.id}`);
+                const { isAdmin } = await check.json();
+                
+                if (!isAdmin) {
+                    showNotification('Доступ запрещён', 'error');
+                    setTimeout(() => window.location.href = '/', 2000);
+                    return;
+                }
+            } catch (e) {
+                console.error('Init error:', e);
+            }
+            
+            switchTab('create');
+        }
+
+        // Switch tab
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+            event.target?.classList.add('active');
+            
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            switch(tab) {
+                case 'create':
+                    renderCreateForm();
+                    break;
+                case 'manage':
+                    renderManageList();
+                    break;
+                case 'results':
+                    renderResultsList();
+                    break;
+            }
+        }
+
+        // Render create form
+        function renderCreateForm() {
+            document.getElementById('content').innerHTML = `
+                <h2 class="section-title">➕ Новый турнир</h2>
+                
+                <div class="form-card">
+                    <div class="form-group">
+                        <label class="form-label">Название турнира</label>
+                        <input type="text" class="form-input" id="tTitle" placeholder="Sunday High Roller">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Дата и время</label>
+                            <input type="text" class="form-input" id="tDate" placeholder="12 фев, 19:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Макс. игроков</label>
+                            <input type="number" class="form-input" id="tMax" value="20" min="2" max="100">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Бай-ин</label>
+                            <input type="text" class="form-input" id="tBuyin" placeholder="5,000 ₽">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Призовой фонд</label>
+                            <input type="text" class="form-input" id="tPrize" placeholder="150,000 ₽">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="createTournament()">
+                        Создать турнир
+                    </button>
+                </div>
+            `;
+        }
+
+        // Create tournament
+        async function createTournament() {
+            const title = document.getElementById('tTitle').value.trim();
+            const date = document.getElementById('tDate').value.trim();
+            const buyin = document.getElementById('tBuyin').value.trim();
+            const prize = document.getElementById('tPrize').value.trim();
+            const maxPlayers = parseInt(document.getElementById('tMax').value);
+            
+            if (!title || !date || !buyin || !prize || !maxPlayers) {
+                showNotification('Заполните все поля', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/tournaments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title, date, buyin, prize, maxPlayers,
+                        userId: user.id
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('✅ Турнир создан!', 'success');
+                    document.querySelectorAll('.form-input').forEach(i => i.value = '');
+                    document.getElementById('tMax').value = '20';
+                } else {
+                    const err = await response.json();
+                    showNotification('❌ ' + (err.error || 'Ошибка'), 'error');
+                }
+            } catch (e) {
+                showNotification('Ошибка соединения', 'error');
+            }
+        }
+
+        // Render manage list
+        async function renderManageList() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await fetch('/api/tournaments');
+                tournamentsData = await response.json();
+                
+                if (tournamentsData.length === 0) {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🎰</div>
+                            <h3>Нет турниров</h3>
+                            <p>Создайте первый турнир во вкладке "Создать"</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                content.innerHTML = `<h2 class="section-title">⚙️ Управление</h2>`;
+                
+                tournamentsData.forEach(t => {
+                    content.insertAdjacentHTML('beforeend', `
+                        <div class="tournament-item">
+                            <div class="tournament-header">
+                                <div>
+                                    <div class="tournament-title">${t.title}</div>
+                                    <div class="tournament-meta">${t.date} • ${t.players.length}/${t.maxPlayers} игроков</div>
+                                </div>
+                                <span class="tournament-status ${t.status === 'open' ? 'status-open' : 'status-finished'}">
+                                    ${t.status === 'open' ? 'АКТИВЕН' : 'ЗАВЕРШЁН'}
+                                </span>
+                            </div>
+                            
+                            <div class="tournament-stats">
+                                <div class="stat">
+                                    <div class="stat-value">${t.buyin}</div>
+                                    <div class="stat-label">Бай-ин</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">${t.prize}</div>
+                                    <div class="stat-label">Призовой</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">${t.players.length}</div>
+                                    <div class="stat-label">Участников</div>
+                                </div>
+                            </div>
+                            
+                            ${t.players.length > 0 ? `
+                                <div class="players-section">
+                                    <div class="players-title">Зарегистрированные:</div>
+                                    ${t.players.map((p, i) => `
+                                        <div class="player-row">
+                                            <div class="player-info">
+                                                <div class="player-avatar" style="background: hsl(${i * 60 + 200}, 70%, 50%)">
+                                                    ${p.nickname[0].toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div class="player-name">${p.nickname}</div>
+                                                    <div class="player-phone">${p.phone}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="tournament-actions" style="margin-top: 16px;">
+                                ${t.status === 'open' ? `
+                                    <button class="btn btn-danger btn-small" onclick="deleteTournament(${t.id})">
+                                        Удалить
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `);
+                });
+            } catch (e) {
+                content.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Ошибка загрузки</p>';
+            }
+        }
+
+        // Delete tournament
+        async function deleteTournament(id) {
+            if (!confirm('Удалить турнир? Это действие нельзя отменить.')) return;
+            
+            try {
+                const response = await fetch(`/api/tournaments/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'user-id': user.id }
+                });
+                
+                if (response.ok) {
+                    showNotification('✅ Турнир удалён', 'success');
+                    renderManageList();
+                } else {
+                    showNotification('❌ Ошибка удаления', 'error');
+                }
+            } catch (e) {
+                showNotification('Ошибка соединения', 'error');
+            }
+        }
+
+        // Render results list
+        async function renderResultsList() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await fetch('/api/tournaments');
+                tournamentsData = await response.json();
+                const active = tournamentsData.filter(t => t.status === 'open' && t.players.length > 0);
+                
+                if (active.length === 0) {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🏆</div>
+                            <h3>Нет активных турниров</h3>
+                            <p>Нет турниров с зарегистрированными игроками</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                content.innerHTML = `<h2 class="section-title">🏆 Внести результаты</h2>`;
+                
+                active.forEach(t => {
+                    content.insertAdjacentHTML('beforeend', `
+                        <div class="tournament-item">
+                            <div class="tournament-header">
+                                <div>
+                                    <div class="tournament-title">${t.title}</div>
+                                    <div class="tournament-meta">${t.date} • ${t.players.length} участников</div>
+                                </div>
+                            </div>
+                            
+                            <div class="results-form" id="results-${t.id}">
+                                <div class="players-title">Распределение мест:</div>
+                                ${t.players.map((p, i) => `
+                                    <div class="result-row">
+                                        <div class="result-place">#${i + 1}</div>
+                                        <div class="player-name">${p.nickname}</div>
+                                        <input type="number" class="form-input" placeholder="Приз" id="prize-${t.id}-${p.userId}" style="padding: 10px;">
+                                        <input type="hidden" value="${p.userId}" id="userid-${t.id}-${i}">
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <button class="btn btn-success" onclick="submitResults(${t.id})" style="margin-top: 16px;">
+                                Сохранить результаты
+                            </button>
+                        </div>
+                    `);
+                });
+            } catch (e) {
+                content.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Ошибка загрузки</p>';
+            }
+        }
+
+        // Submit results
+        async function submitResults(tournamentId) {
+            const tournament = tournamentsData.find(t => t.id === tournamentId);
+            const results = [];
+            
+            tournament.players.forEach((p, i) => {
+                const prize = parseInt(document.getElementById(`prize-${tournamentId}-${p.userId}`).value) || 0;
+                results.push({
+                    userId: p.userId,
+                    place: i + 1,
+                    prize: prize
+                });
+            });
+            
+            try {
+                const response = await fetch(`/api/tournaments/${tournamentId}/results`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, results })
+                });
+                
+                if (response.ok) {
+                    showNotification('✅ Результаты сохранены!', 'success');
+                    renderResultsList();
+                } else {
+                    showNotification('❌ Ошибка сохранения', 'error');
+                }
+            } catch (e) {
+                showNotification('Ошибка соединения', 'error');
+            }
+        }
+
+        // Notification
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
