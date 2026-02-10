@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 
 const DB_FILE = './data.json';
-const ADMIN_IDS = [123456789];
+const ADMIN_IDS = [971440476];
 
 function initDB() {
     if (!fs.existsSync(DB_FILE)) {
